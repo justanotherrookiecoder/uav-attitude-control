@@ -1,44 +1,34 @@
-
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Load simulation results
-df = pd.read_csv("disturbance_sweep_results.csv")
-
+df = pd.read_csv("results/disturbance_sweep_results.csv")
 controllers = ["Fixed PID", "Gain-Scheduled PID", "MPC"]
 
-plots = [
-    ("RollMSE", "Roll MSE (deg²)", "Roll MSE vs Disturbance Strength",
-     "rollmse_vs_disturbance.png"),
-    ("PitchMSE", "Pitch MSE (deg²)", "Pitch MSE vs Disturbance Strength",
-     "pitchmse_vs_disturbance.png"),
-]
-
-for column, ylabel, title, filename in plots:
-    fig, ax = plt.subplots(figsize=(8, 5))
+for axis in ["Roll", "Pitch"]:
+    plt.figure(figsize=(8, 5))
 
     for controller in controllers:
-        subset = df[df["Controller"].str.strip() == controller]
-
-        ax.plot(
-            subset["Disturbance_Nm"],
-            subset[column],
-            marker="o",
-            linewidth=2,
-            label=controller,
+        data = df[df["Controller"] == controller].sort_values(
+            "Disturbance_Nm"
         )
 
-    ax.set_xlabel("Disturbance Strength (N·m)")
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
-    ax.set_xticks([0.08, 0.12, 0.16])
-    ax.grid(True, linestyle="--", alpha=0.4)
-    ax.legend()
-    fig.tight_layout()
+        plt.plot(
+            data["Disturbance_Nm"],
+            data[f"{axis}MSE"],
+            marker="o",
+            linewidth=2,
+            label=controller
+        )
 
-    fig.savefig(filename, dpi=300, bbox_inches="tight")
-    plt.close(fig)
+    plt.xlabel("Disturbance Strength (N·m)")
+    plt.ylabel(f"{axis} Mean Squared Error (deg²)")
+    plt.title(f"{axis} MSE vs Disturbance Strength")
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+
+    filename = f"{axis.lower()}_mse_corrected.png"
+    plt.savefig(filename, dpi=300)
+    plt.show()
 
     print(f"Saved: {filename}")
-
-print("\nAll graphs generated successfully.")
